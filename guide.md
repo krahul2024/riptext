@@ -1,4 +1,11 @@
+1. Search
+    * Single file operations, search for a pattern on different flags(case matching, whole/partial). 
+    * Recusrive
+        - for file names, 
+        - for matching patterns in text in all files 
+        - 
 ### **Single File Processing:**
+
 - Search
 - Pattern Matching
 - Replacement
