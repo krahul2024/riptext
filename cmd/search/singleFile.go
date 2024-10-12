@@ -1,6 +1,0 @@
-package search
-
-
-func main(){
-    
-}
