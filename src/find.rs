@@ -1,3 +1,4 @@
+
 pub fn find(args: Vec<String>) {
     if args.is_empty() {
         exit();
@@ -18,14 +19,15 @@ pub fn find(args: Vec<String>) {
 // once all flags are checked then move to the pattern and path part
 // if there are more values than 2, then either don't consider rest of the
 // values except two, actually that's good choice
+
+fn parse(args: Vec<String>) {
+    let mut i = 0;
+}
+
+
+
 fn parse_args(args: Vec<String>) {
     let mut i = 0;
-    // when using this method, I must get a flag at each iteration
-    // if the value at the start is not a flag so the first value is a pattern
-    // and if there is a second value then it is the path
-    // so what I can do is when i find that the start value of loop is not a flag
-    // then i just take this value as pattern and check if there is a next value
-    // if so then it is the path, and discard rest of the values(if any left)
     while i < args.len() {
         // if the current value is flag
         if args[i].starts_with('-') {
@@ -71,3 +73,79 @@ after dealing with all the flags I should get the last two(at least one) values
 if there is only one value left after flags then it means that I have to consider default path
 which is .
 */
+
+#[derive(Debug)]
+struct Flag {
+    short: &'static str,
+    long: &'static str,
+    value_type: &'static str,
+    short_desc: &'static str,
+    long_desc: &'static str,
+}
+
+static FLAGS: &[Flag] = &[
+    Flag {
+        short: "-h",
+        long: "--help",
+        value_type: "none",
+        short_desc: "Show help",
+        long_desc: "Displays the help information for the command-line tool.",
+    },
+    Flag {
+        short: "-d",
+        long: "--depth",
+        value_type: "int",
+        short_desc: "file/directory depth",
+        long_desc: "depth upto which recursively search for all the files for specified path",
+    },
+    Flag {
+        short: "-a",
+        long: "--allow-hidden",
+        value_type: "bool",
+        short_desc: "search hidden files",
+        long_desc: "search includes all the hidden files for specified path",
+    },
+    Flag {
+        short: "-i",
+        long: "--ignore-case",
+        value_type: "bool",
+        short_desc: "ignore case, default value is false",
+        long_desc: "ignore the case for search, default value is false",
+    },
+    Flag { 
+        short: "-e", 
+        long: "--exclude", 
+        value_type: "string", 
+        short_desc: "Exclude files/directories", 
+        long_desc: "Specifies files or directories to exclude from the search." 
+    },
+    Flag { 
+        short: "-o", 
+        long: "--output", 
+        value_type: "string", 
+        short_desc: "Write output to file", 
+        long_desc: "Specifies the file to which the output will be written." 
+    },
+    Flag {
+        short: "-l",
+        long: "--limit",
+        value_type: "int",
+        short_desc: "no. of results to display",
+        long_desc: "total no. of result to display, default is all the results",
+    },
+    Flag {
+        short: "-c",
+        long: "--color",
+        value_type: "bool",
+        short_desc: "output has colored pattern",
+        long_desc: "output contains all the occurences of pattern colored",
+    },
+    Flag {
+        short: "-r",
+        long: "--recursive",
+        value_type: "bool",
+        short_desc: "recursively search",
+        long_desc: "recursively search for all the files for specified path",
+    },
+];
+
