@@ -30,7 +30,7 @@ impl FindArgs {
 
 // find [{--flag, value(optional)}, ...]  pattern   path(optional)
 // Returns : (Vec<flag, value_type, value), pattern, path)
-fn parse(args: Vec<String>) {
+fn parse(args: Vec<String>) -> find_args {
     let mut find_args = FindArgs::new();
     let mut i = 0;
 
@@ -61,12 +61,25 @@ fn parse(args: Vec<String>) {
             }
 
             // now is the time to check the flag value and its type
-            let flag_value = get_flag_value(flag_value_type, flag_value);
+            check_flag_value(flag_value_type, flag_value);
+            // now we have a nice flag, value, value type for us
+            find_args.flags.push((flag.to_string(), flag_value_type.to_string(), flag_value.to_string()));
             i += 1; // go to next set of arguments
         } else {
-
+            // now we have to get pattern and the path(if provided)
+            let pattern = arg_value.to_string();
+            let mut path = "".to_string();
+            if i > args.len() - 1 {
+                path = ".".to_string();
+            } else {
+                path = args[i+1].clone();
+            }
+            find_args.path = path;
+            find_args.pattern = pattern;
         }
     } 
+
+    find_args
 }
 
 fn get_flag_type(flag: &str) -> &str {
@@ -78,12 +91,28 @@ fn get_flag_type(flag: &str) -> &str {
             break;
         }
     }
-    
+
     return flag_type;
 }
 
-fn get_flag_value(value_type: &str, value: &str) {
-
+// check if the value is correctly parse-able to the mentioned value_type if so, then return the
+// value string and value_type
+fn check_flag_value(value_type: &str, value: &str) {
+    match value_type {
+        "bool" => {
+            if value != "true" {
+                eprintln!("invalid parsing {value} to {value_type}");
+                std::process::exit(1);
+            }
+        },
+        "string" => { /* nothing to do here */ },
+        "int"   => { let _: i32 = value.parse().expect("error parsing to int"); },
+        "float" => { let _: f32 = value.parse().expect("error parsing to float"); },
+        _ => {
+            eprintln!("invalid parsing {value} to {value_type}");
+            std::process::exit(1);
+        }
+    }
 }
 
 
