@@ -6,54 +6,84 @@ pub fn find(args: Vec<String>) {
     parse_args(args);
 
 }
-// -x x --fas -fsdf fasdf fasdf fasdf fasdf
-// I am not taking into account of the case when
-// rt find --boolean-flag pattern 
-// to solve this, when I find a flag, I would check for the type
-// of flag in the flags list, if it is boolean then don't consider the next value
-// if the flag is not found in the flag list then return error
-// if flag has a non boolean value then try parsing to the flag value type
-// if that results in error, return that error, then move on to next part
-// once done keep the start logic same until all the flags are checked,
-// once all flags are checked then move to the pattern and path part
-// if there are more values than 2, then either don't consider rest of the
-// values except two, actually that's good choice
+
+struct FindArgs {
+    flags: Vec<(String, String, String)>,
+    pattern: String,
+    path: String,
+}
+
+impl FindArgs {
+    fn new() -> FindArgs {
+        FindArgs {
+            flags: Vec::new(),
+            pattern: String::new(),
+            path: String::new(),
+        }
+    }
+
+    fn from(flags: Vec<(String, String, String)>, pattern: String, path: String) -> FindArgs {
+        FindArgs {
+            flags, pattern, path }
+    }
+}
 
 // find [{--flag, value(optional)}, ...]  pattern   path(optional)
-
+// Returns : (Vec<flag, value_type, value), pattern, path)
 fn parse(args: Vec<String>) {
+    let mut find_args = FindArgs::new();
     let mut i = 0;
+
     while i < args.len() {
         let arg_value = args[i].clone();
         // means we have a flag, need to check it in flags and then look for its value 
         // on the basis of its value type
         if arg_value.starts_with('-') {
-            let flag = arg_value.trim_start_matches('-');       
-            let flag_value_type = flag_type(flag.to_string());
+            let flag = arg_value.trim_start_matches('-');
+            let flag_value_type = get_flag_type(flag);
             if flag_value_type == "" {
                 // means there is no such flag
                 eprintln!("invalid flag: {flag}");
                 std::process::exit(1);
             }
-            
-        } // flag value 
-        else {
+            // let's get the value for the flag, since it is confirmed that
+            // next we have a flag which should have some value, not if the value_type is boolean
+            let mut flag_value = "";
+            if flag_value_type == "bool" {
+                flag_value = "true";
+            } else {
+                i += 1;
+                if i >= args.len() {
+                    eprintln!("invalid flag: {flag}");
+                    std::process::exit(1);
+                }
+                flag_value = args[i].as_str();
+            }
+
+            // now is the time to check the flag value and its type
+            let flag_value = get_flag_value(flag_value_type, flag_value);
+            i += 1; // go to next set of arguments
+        } else {
 
         }
     } 
 }
 
-fn flag_type(flag: String) -> &str {
+fn get_flag_type(flag: &str) -> &str {
     let mut flag_type = "";
 
     for flag_item in FLAGS {
-        if flag_item.short.to_string() == flag || flag_item.long.to_string() == flag {
+        if flag_item.short == flag || flag_item.long == flag {
             flag_type = flag_item.value_type.clone();
             break;
         }
     }
-
+    
     return flag_type;
+}
+
+fn get_flag_value(value_type: &str, value: &str) {
+
 }
 
 
