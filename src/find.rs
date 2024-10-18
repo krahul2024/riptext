@@ -1,4 +1,3 @@
-
 pub fn find(args: Vec<String>) {
     if args.is_empty() {
         exit();
@@ -20,10 +19,42 @@ pub fn find(args: Vec<String>) {
 // if there are more values than 2, then either don't consider rest of the
 // values except two, actually that's good choice
 
+// find [{--flag, value(optional)}, ...]  pattern   path(optional)
+
 fn parse(args: Vec<String>) {
     let mut i = 0;
+    while i < args.len() {
+        let arg_value = args[i].clone();
+        // means we have a flag, need to check it in flags and then look for its value 
+        // on the basis of its value type
+        if arg_value.starts_with('-') {
+            let flag = arg_value.trim_start_matches('-');       
+            let flag_value_type = flag_type(flag.to_string());
+            if flag_value_type == "" {
+                // means there is no such flag
+                eprintln!("invalid flag: {flag}");
+                std::process::exit(1);
+            }
+            
+        } // flag value 
+        else {
+
+        }
+    } 
 }
 
+fn flag_type(flag: String) -> &str {
+    let mut flag_type = "";
+
+    for flag_item in FLAGS {
+        if flag_item.short.to_string() == flag || flag_item.long.to_string() == flag {
+            flag_type = flag_item.value_type.clone();
+            break;
+        }
+    }
+
+    return flag_type;
+}
 
 
 fn parse_args(args: Vec<String>) {
