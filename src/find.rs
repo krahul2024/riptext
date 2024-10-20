@@ -12,7 +12,7 @@ pub fn find(args: Vec<String>) {
 struct FindArgs {
     flags: Vec<(String, String, String)>, // (flag, flag_value_type, value)
     pattern: String,
-    path: String,
+    paths: Vec<String>,
 }
 
 impl FindArgs {
@@ -20,13 +20,12 @@ impl FindArgs {
         FindArgs {
             flags: Vec::new(),
             pattern: String::new(),
-            path: String::new(),
+            paths: Vec::new(),
         }
     }
 
-    fn from(flags: Vec<(String, String, String)>, pattern: String, path: String) -> FindArgs {
-        FindArgs {
-            flags, pattern, path }
+    fn from(flags: Vec<(String, String, String)>, pattern: String, paths: Vec<String>) -> FindArgs {
+        FindArgs { flags, pattern, paths }
     }
 }
 
@@ -35,10 +34,9 @@ fn parse(args: Vec<String>) -> FindArgs {
     let mut find_args = FindArgs::new();
     let mut i = 0;
 
-    println!("{:#?}", args);
-
     while i < args.len() {
         let arg_value = args[i].clone();
+        println!("{arg_value}");
         // means we have a flag, need to check it in flags and then look for its value 
         // on the basis of its value type
         if arg_value.starts_with('-') {
@@ -73,26 +71,33 @@ fn parse(args: Vec<String>) -> FindArgs {
             check_flag_value(flag_value_type, flag_value);
             // now we have a nice flag, value, value type for us
             find_args.flags.push((arg_value.to_string(), flag_value_type.to_string(), flag_value.to_string()));
+            i += 1;
         } else {
             // now we have to get pattern and the path(if provided)
             let pattern = arg_value.to_string();
-            let mut path = "".to_string();
-            if i >= args.len() - 1 {
-                path = ".".to_string();
-            } else {
-                path = args[i+1].clone();
+            let mut paths: Vec<String> = Vec::new();
+            i += 1;
+            
+            // get all the file/dir paths, can be a function which checks the validity of the paths
+            while i < args.len() {
+                paths.push(args[i].clone());
+                i += 1;
             }
-            find_args.path = path;
+
+            if paths.len() == 0 {
+                paths.push(".".to_string());
+            }
+            
+            find_args.paths = paths;
             find_args.pattern = pattern;
         }
-        i += 1;
+
     } 
 
     find_args
 }
 
 fn get_flag_type(flag: &str) -> &str {
-    println!("{flag}");
     let mut flag_type = "";
 
     for flag_item in FLAGS {
