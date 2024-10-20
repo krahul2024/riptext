@@ -3,12 +3,14 @@ pub fn find(args: Vec<String>) {
         exit();
     }
 
-    parse_args(args);
+    let args = parse(args);
+    println!("{:#?}", args);
 
 }
 
+#[derive(Debug)]
 struct FindArgs {
-    flags: Vec<(String, String, String)>,
+    flags: Vec<(String, String, String)>, // (flag, flag_value_type, value)
     pattern: String,
     path: String,
 }
@@ -29,21 +31,27 @@ impl FindArgs {
 }
 
 // find [{--flag, value(optional)}, ...]  pattern   path(optional)
-// Returns : (Vec<flag, value_type, value), pattern, path)
-fn parse(args: Vec<String>) -> find_args {
+fn parse(args: Vec<String>) -> FindArgs {
     let mut find_args = FindArgs::new();
     let mut i = 0;
+
+    println!("{:#?}", args);
 
     while i < args.len() {
         let arg_value = args[i].clone();
         // means we have a flag, need to check it in flags and then look for its value 
         // on the basis of its value type
         if arg_value.starts_with('-') {
-            let flag = arg_value.trim_start_matches('-');
-            let flag_value_type = get_flag_type(flag);
+            // this checks if a string value was passed to boolean flag
+            // find -c true -r
+            if find_args.pattern.len() > 0 {
+                eprintln!("invalid usage, try --help for usage");
+                std::process::exit(1);
+            }
+            let flag_value_type = get_flag_type(&arg_value);
             if flag_value_type == "" {
                 // means there is no such flag
-                eprintln!("invalid flag: {flag}");
+                eprintln!("invalid flag: {arg_value}");
                 std::process::exit(1);
             }
             // let's get the value for the flag, since it is confirmed that
@@ -54,22 +62,22 @@ fn parse(args: Vec<String>) -> find_args {
             } else {
                 i += 1;
                 if i >= args.len() {
-                    eprintln!("invalid flag: {flag}");
+                    eprintln!("invalid flag: {arg_value}");
                     std::process::exit(1);
                 }
                 flag_value = args[i].as_str();
             }
 
             // now is the time to check the flag value and its type
+            // maybe implement own value-type checks, rather than parsing
             check_flag_value(flag_value_type, flag_value);
             // now we have a nice flag, value, value type for us
-            find_args.flags.push((flag.to_string(), flag_value_type.to_string(), flag_value.to_string()));
-            i += 1; // go to next set of arguments
+            find_args.flags.push((arg_value.to_string(), flag_value_type.to_string(), flag_value.to_string()));
         } else {
             // now we have to get pattern and the path(if provided)
             let pattern = arg_value.to_string();
             let mut path = "".to_string();
-            if i > args.len() - 1 {
+            if i >= args.len() - 1 {
                 path = ".".to_string();
             } else {
                 path = args[i+1].clone();
@@ -77,17 +85,19 @@ fn parse(args: Vec<String>) -> find_args {
             find_args.path = path;
             find_args.pattern = pattern;
         }
+        i += 1;
     } 
 
     find_args
 }
 
 fn get_flag_type(flag: &str) -> &str {
+    println!("{flag}");
     let mut flag_type = "";
 
     for flag_item in FLAGS {
         if flag_item.short == flag || flag_item.long == flag {
-            flag_type = flag_item.value_type.clone();
+            flag_type = flag_item.value_type;
             break;
         }
     }
@@ -101,50 +111,23 @@ fn check_flag_value(value_type: &str, value: &str) {
     match value_type {
         "bool" => {
             if value != "true" {
-                eprintln!("invalid parsing {value} to {value_type}");
-                std::process::exit(1);
+                exit();
             }
         },
         "string" => { /* nothing to do here */ },
-        "int"   => { let _: i32 = value.parse().expect("error parsing to int"); },
-        "float" => { let _: f32 = value.parse().expect("error parsing to float"); },
-        _ => {
-            eprintln!("invalid parsing {value} to {value_type}");
-            std::process::exit(1);
-        }
-    }
-}
-
-
-fn parse_args(args: Vec<String>) {
-    let mut i = 0;
-    while i < args.len() {
-        // if the current value is flag
-        if args[i].starts_with('-') {
-            // meaning it is a flag
-            let flag = args[i].trim_start_matches('-');
-            let mut flag_value = "".to_string();
-            i += 1; // go to the next index
-            if i >= args.len() { // if the next value is not provided, then we return error
+        "int" => {
+            value.parse::<i32>().unwrap_or_else(|_| {
                 exit();
-            } else {
-                if args[i].starts_with('-'){ // if the previous flag is a boolean
-                    flag_value = "true".to_string();
-                    println!("flag: {flag}, value: {flag_value}");
-                    continue;
-                } else {
-                    flag_value = args[i].clone();
-                    i += 1;
-                }
-            }
-            println!("flag: {flag}, value: {flag_value}");
-        } else { // the start value is not a flag, we get pattern and path(next possibly) 
-            let pattern = args[i].clone();
-            i += 1;
-            let path = if i < args.len() {args[i].clone()} else {".".to_string()};
-            println!("pattern: {pattern}, path: {path}");
-            break;
-        }
+                0 // return a dummy value
+            });
+        },
+        "float" => {
+            value.parse::<f32>().unwrap_or_else(|_| { 
+                exit(); 
+                0.0 
+            });
+        },
+        _ => {  exit(); }
     }
 }
 
